@@ -25,10 +25,16 @@ const initializeDBAndServer = async () => {
   }
 };
 initializeDBAndServer();
+const getMovieNameObject = (dbObject) => {
+  return {
+    movieName: dbObject.movie_name,
+  };
+};
+
 app.get("/movies/", async (request, response) => {
-  const getQuery = `select * from movie;`;
+  const getQuery = `select movie_name from movie;`;
   const dbResponse = await db.all(getQuery);
-  response.send(dbResponse);
+  response.send(dbResponse.map((eachItem) => getMovieNameObject(eachItem)));
 });
 
 //insert
@@ -44,12 +50,21 @@ app.post("/movies/", async (request, response) => {
 });
 
 //get movie based on movie id
+const getMovieObject = (dbObject) => {
+  return {
+    movieId: dbObject.movie_id,
+    directorId: dbObject.director_id,
+    movieName: dbObject.movie_name,
+    leadActor: dbObject.lead_actor,
+  };
+};
 
 app.get("/movies/:movieId/", async (request, response) => {
   const { movieId } = request.params;
-  const getOneQuery = `select * from movie where movie_id = ${movieId};`;
+  const getOneQuery = `select * from movie where
+   movie_id = '${movieId}';`;
   const dbResponse = await db.get(getOneQuery);
-  response.send(dbResponse);
+  response.send(getMovieObject(dbResponse));
 });
 
 //update movie
@@ -77,19 +92,35 @@ app.delete("/movies/:movieId/", async (request, response) => {
 
 //get directors
 
+const getAllDirectorsListAsObject = (dbObject) => {
+  return {
+    directorId: dbObject.director_id,
+    directorName: dbObject.director_name,
+  };
+};
+
 app.get("/directors/", async (request, response) => {
   const getQuery = `select * from director;`;
   const dbResponse = await db.all(getQuery);
-  response.send(dbResponse);
+  response.send(
+    dbResponse.map((eachItem) => getAllDirectorsListAsObject(eachItem))
+  );
 });
 
 //return movie name with director id
+const GetMovieNameByDirectorObject = (dbObject) => {
+  return {
+    movieName: dbObject.movie_name,
+  };
+};
 
 app.get("/directors/:directorId/movies/", async (request, response) => {
   const { directorId } = request.params;
   const getOneQuery = `select movie_name from movie where director_id = ${directorId} group by movie_id;`;
-  const dbResponse = await db.get(getOneQuery);
-  response.send(dbResponse);
+  const dbResponse = await db.all(getOneQuery);
+  response.send(
+    dbResponse.map((eachItem) => GetMovieNameByDirectorObject(eachItem))
+  );
 });
 
 module.exports = app;
